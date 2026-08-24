@@ -1,0 +1,692 @@
+<style>
+  :root{
+    --ink:#E7E4DA;
+    --ink-soft:#B7BEC4;
+    --graphite:#8B939B;
+    --paper:#14171B;
+    --paper-raised:#1C2126;
+    --field:#20252B;
+    --field-alt:#1A1E23;
+    --rule:#2B3037;
+    --rule-strong:#3E444C;
+    --brass:#CBA25B;
+    --brass-soft:#3A3221;
+    --good:#5FA97C;
+    --warn:#D89A4E;
+    --bad:#DB7C68;
+    --flag:#C46389;
+    --ph:#5C636B;
+  }
+  *{box-sizing:border-box}
+  #root{
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",YuGothic,"Noto Sans JP",system-ui,sans-serif;
+    color:var(--ink);
+    background:var(--paper);
+    font-size:14px;
+    line-height:1.7;
+    min-height:100%;
+  }
+  .mincho{font-family:"Hiragino Mincho ProN","Yu Mincho",YuMincho,"Noto Serif JP",serif;font-weight:600}
+  .mono{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+
+  /* ── 図面シート風のヘッダ ── */
+  .sheet-head{
+    border-bottom:1.5px solid var(--ink);
+    background:var(--paper-raised);
+    padding:18px 20px 0;
+  }
+  .sheet-title{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .sheet-title h1{margin:0;font-size:19px;letter-spacing:.06em}
+  .sheet-no{
+    font-size:10.5px;letter-spacing:.18em;color:var(--brass);
+    border:1px solid var(--brass);border-radius:2px;padding:1px 7px;text-transform:uppercase;
+  }
+  .sheet-sub{margin:5px 0 14px;font-size:12px;color:var(--graphite);max-width:64ch}
+
+  /* ── 工務店タブ ── */
+  .tabs{display:flex;gap:2px;align-items:flex-end;overflow-x:auto;padding-bottom:0;scrollbar-width:thin}
+  .tab{
+    flex:0 0 auto;border:1px solid var(--rule);border-bottom:none;background:transparent;
+    padding:8px 15px 9px;cursor:pointer;font-size:13px;color:var(--graphite);
+    border-radius:3px 3px 0 0;font-family:inherit;position:relative;top:1px;transition:background .12s;
+  }
+  .tab:hover{background:rgba(255,255,255,.05);color:var(--ink)}
+  .tab[aria-selected="true"]{
+    background:var(--paper);color:var(--ink);border-color:var(--ink);border-bottom:1.5px solid var(--paper);
+    font-weight:700;
+  }
+  .tab .pct{font-size:10.5px;color:var(--brass);margin-left:7px}
+  .tab-add{
+    flex:0 0 auto;border:1px dashed var(--rule-strong);background:none;color:var(--graphite);
+    padding:8px 13px;cursor:pointer;border-radius:3px 3px 0 0;font-size:13px;font-family:inherit;
+  }
+  .tab-add:hover{color:var(--brass);border-color:var(--brass)}
+
+  /* ── 進捗の帯（タイトルブロック風） ── */
+  .meta-bar{
+    display:flex;gap:0;flex-wrap:wrap;border:1px solid var(--rule);
+    background:var(--paper-raised);margin:16px 20px 0;
+  }
+  .meta-cell{flex:1 1 150px;padding:8px 12px;border-right:1px solid var(--rule);min-width:0}
+  .meta-cell:last-child{border-right:none}
+  .meta-cell label{display:block;font-size:10px;letter-spacing:.12em;color:var(--graphite);margin-bottom:3px}
+  .meta-cell input{
+    width:100%;border:none;background:none;font-family:inherit;font-size:13px;color:var(--ink);
+    padding:0;outline:none;border-bottom:1px solid transparent;
+  }
+  .meta-cell input:focus{border-bottom-color:var(--brass)}
+  .meta-cell input::placeholder{color:var(--ph)}
+
+  .progress{padding:10px 12px}
+  .progress .track{height:5px;background:var(--rule);border-radius:0;overflow:hidden;display:flex}
+  .progress .fill{background:var(--brass);height:100%;transition:width .25s}
+  .progress .flagged{background:var(--flag);height:100%;transition:width .25s}
+  .progress .num{font-size:11px;color:var(--graphite);margin-top:5px;display:flex;justify-content:space-between}
+
+  /* ── ツールバー ── */
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:14px 20px 0}
+  .chip{
+    border:1px solid var(--rule-strong);background:var(--paper-raised);color:var(--ink-soft);
+    padding:4px 11px;border-radius:99px;cursor:pointer;font-size:12px;font-family:inherit;
+  }
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip.danger[aria-pressed="true"]{background:var(--flag);border-color:var(--flag)}
+  .spacer{flex:1}
+  .link-btn{
+    background:none;border:none;color:var(--graphite);cursor:pointer;font-size:12px;
+    font-family:inherit;text-decoration:underline;text-underline-offset:3px;padding:4px 2px;
+  }
+  .link-btn:hover{color:var(--brass)}
+
+  /* ── 質問リスト ── */
+  .list{padding:6px 20px 60px;max-width:1000px}
+  .cat-head{
+    display:flex;align-items:center;gap:10px;margin:26px 0 8px;
+    border-bottom:1px solid var(--ink);padding-bottom:5px;
+  }
+  .cat-head h2{margin:0;font-size:14px;letter-spacing:.1em}
+  .cat-head .count{font-size:11px;color:var(--graphite)}
+
+  .q{
+    border:1px solid var(--rule);border-left:3px solid var(--rule-strong);
+    background:var(--paper-raised);margin-bottom:8px;
+  }
+  .q.answered{border-left-color:var(--brass)}
+  .q.flagged{border-left-color:var(--flag)}
+  .q-top{display:flex;gap:11px;padding:11px 13px;align-items:flex-start}
+  .q-id{font-size:10px;color:var(--graphite);padding-top:3px;flex:0 0 auto;letter-spacing:.06em}
+  .q-text{flex:1;font-size:13.5px;line-height:1.65;min-width:0}
+  .q-text .custom-tag{
+    font-size:9.5px;color:var(--brass);border:1px solid var(--brass);border-radius:2px;
+    padding:0 5px;margin-left:7px;vertical-align:2px;letter-spacing:.08em;
+  }
+  .q-hint{
+    margin:7px 0 0;font-size:11.5px;color:var(--graphite);line-height:1.7;
+    border-left:2px solid var(--brass-soft);padding-left:9px;
+  }
+  .hint-toggle{
+    background:none;border:none;color:var(--brass);font-size:11px;cursor:pointer;
+    font-family:inherit;padding:2px 0;text-align:left;
+  }
+  .q-body{padding:0 13px 12px 13px}
+  textarea{
+    width:100%;border:1px solid var(--rule);background:var(--field);font-family:inherit;font-size:13px;
+    line-height:1.7;padding:8px 10px;resize:vertical;color:var(--ink);outline:none;border-radius:2px;
+  }
+  textarea:focus{border-color:var(--brass);box-shadow:0 0 0 2px var(--brass-soft)}
+  textarea::placeholder{color:var(--ph)}
+  .a-main{min-height:62px}
+  .a-judge{min-height:44px;margin-top:6px;border-color:var(--brass-soft)}
+  .a-memo{min-height:40px;margin-top:6px;background:var(--field-alt)}
+
+  .q-controls{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px}
+  .ev{
+    border:1px solid var(--rule-strong);background:var(--field);width:32px;height:28px;cursor:pointer;
+    font-size:13px;font-family:inherit;color:var(--graphite);border-radius:2px;line-height:1;
+  }
+  .ev:hover{border-color:var(--ink)}
+  .ev[aria-pressed="true"]{color:#14171B;font-weight:700}
+  .ev.good[aria-pressed="true"]{background:var(--good);border-color:var(--good)}
+  .ev.mid[aria-pressed="true"]{background:var(--warn);border-color:var(--warn)}
+  .ev.bad[aria-pressed="true"]{background:var(--bad);border-color:var(--bad)}
+  .ev.na[aria-pressed="true"]{background:var(--graphite);border-color:var(--graphite)}
+  .flag-btn{
+    border:1px solid var(--rule-strong);background:var(--field);padding:4px 10px;cursor:pointer;
+    font-size:11.5px;font-family:inherit;color:var(--graphite);border-radius:2px;
+  }
+  .flag-btn[aria-pressed="true"]{background:var(--flag);color:#14171B;border-color:var(--flag)}
+  .del-btn{
+    border:none;background:none;color:#565C63;cursor:pointer;font-size:11.5px;font-family:inherit;
+    margin-left:auto;padding:4px 2px;
+  }
+  .del-btn:hover{color:var(--bad)}
+
+  /* ── 追加フォーム ── */
+  .adder{border:1px dashed var(--rule-strong);background:none;padding:13px;margin-top:10px}
+  .adder textarea{min-height:54px}
+  .adder-row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center}
+  select{
+    border:1px solid var(--rule-strong);background:var(--field);font-family:inherit;font-size:12.5px;
+    padding:5px 8px;color:var(--ink);border-radius:2px;outline:none;
+  }
+  .btn{
+    border:1px solid var(--ink);background:var(--ink);color:var(--paper);padding:6px 15px;
+    cursor:pointer;font-size:12.5px;font-family:inherit;border-radius:2px;
+  }
+  .btn:hover{background:var(--ink-soft)}
+  .btn.ghost{background:none;color:var(--ink)}
+  .btn.ghost:hover{background:rgba(255,255,255,.06)}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .scope-note{font-size:11px;color:var(--graphite);flex-basis:100%;margin-top:-2px}
+
+  /* ── 状態表示 ── */
+  .empty{padding:50px 20px;text-align:center;color:var(--graphite);font-size:13px}
+  .empty .btn{margin-top:14px}
+  .saving{
+    position:fixed;right:14px;bottom:14px;background:var(--ink);color:var(--paper);
+    padding:6px 14px;border-radius:99px;font-size:11.5px;opacity:0;transition:opacity .2s;
+    pointer-events:none;z-index:50;letter-spacing:.05em;
+  }
+  .saving.on{opacity:.92}
+  .saving.err{background:var(--bad)}
+  .banner{
+    margin:14px 20px 0;border:1px solid var(--bad);background:#2A1A17;color:var(--bad);
+    padding:9px 13px;font-size:12px;border-radius:2px;
+  }
+  dialog{
+    border:1px solid var(--rule-strong);border-radius:3px;padding:0;background:var(--paper-raised);
+    max-width:520px;width:calc(100% - 32px);color:var(--ink);
+    font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  }
+  dialog::backdrop{background:rgba(0,0,0,.6)}
+  .dlg-head{padding:14px 18px 0}
+  .dlg-head h3{margin:0 0 4px;font-size:15px}
+  .dlg-head p{margin:0;font-size:12px;color:var(--graphite)}
+  .dlg-body{padding:14px 18px}
+  .dlg-body input[type=text]{
+    width:100%;border:1px solid var(--rule-strong);padding:8px 10px;font-family:inherit;
+    font-size:13.5px;border-radius:2px;outline:none;color:var(--ink);background:var(--field);
+  }
+  .dlg-body input[type=text]:focus{border-color:var(--brass)}
+  .dlg-body input[type=text]::placeholder{color:var(--ph)}
+  .dlg-body textarea{min-height:120px;font-size:11.5px}
+  .dlg-foot{display:flex;gap:8px;justify-content:flex-end;padding:0 18px 16px}
+  .radio-row{display:flex;gap:14px;margin-top:10px;font-size:12.5px;flex-wrap:wrap}
+  .radio-row label{display:flex;gap:6px;align-items:center;cursor:pointer}
+
+  @media (max-width:640px){
+    .sheet-head{padding:14px 13px 0}
+    .meta-bar{margin:12px 13px 0}
+    .toolbar{padding:12px 13px 0}
+    .list{padding:4px 13px 60px}
+    .meta-cell{flex:1 1 100%;border-right:none;border-bottom:1px solid var(--rule)}
+    .q-top{padding:10px}
+    .q-body{padding:0 10px 10px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div id="root"></div>
+<script>
+const DEFAULT_TEMPLATE = [{"id": "1", "cat": "会社・契約主体", "q": "契約する相手は、この拠点ですか、それとも本部ですか。保証書を出されるのはどちらでしょうか", "hint": "契約主体・保証書の発行元・瑕疵保険の加入者名義を即答でき、書面で示せるのが合格。倒産リスクを負う相手がどこかを確定させる。"}, {"id": "2", "cat": "会社・契約主体", "q": "この拠点で、引渡しまで終わったお家は何棟ぐらいですか。着工中を含めるとどのくらいですか", "hint": "引渡し済／着工中／契約済を分けて数字で言えるのが合格。会社全体の棟数にすり替える回答は要注意。"}, {"id": "3", "cat": "会社・契約主体", "q": "守山・野洲での施工実績は、この3年で何棟ですか", "hint": "協力業者網が現地にあるかを測る。実績が薄いなら、現場管理コストと手直しの即応性に影響する。"}, {"id": "4", "cat": "会社・契約主体", "q": "将来、体制が変わったり加盟をやめられた場合、保証はどうなりますか", "hint": "瑕疵保険による10年（法定）と、会社独自の任意保証を切り分けて説明できるのが合格。嫌がる態度そのものを記録する。"}, {"id": "5", "cat": "会社・契約主体", "q": "契約後に、こちらの都合や工務店側の事情で契約を解除する場合、違約金や返金の条件はどうなっていますか", "hint": "着手前・設計中・着工後で解除条件が変わるのが一般的。契約書に金額や割合が明記されているかを確認する。口頭説明のみなら後でトラブルになりやすい。"}, {"id": "6", "cat": "設計", "q": "設計はどなたがされますか。外部の建築家の場合、指名や変更はできますか", "hint": "設計士と大工の協働経験が納まりの実現度を左右する。初対面同士だと図面の意図が現場に伝わらない。"}, {"id": "7", "cat": "設計", "q": "生活動線や収納量など、暮らし方の希望はどうやって聞き取られますか。専用のヒアリングシートなどはありますか", "hint": "聞き取りの手順が仕組み化されている会社は、担当者の力量に左右されにくい。「雑談の中で伺います」のみだと聞き漏れが担当者依存になる。"}, {"id": "8", "cat": "設計", "q": "設計にはどのくらいの期間をかけますか。契約前と契約後で、打ち合わせの回数や頻度はどう変わりますか", "hint": "標準的な設計期間と打合せ回数を具体的な数字で答えられるのが合格。「その都度対応します」だけでは着工時期の見通しが立たない。"}, {"id": "9", "cat": "設計", "q": "プランの提案は何案までいただけますか。契約後の設計変更は何回まで無料で、それ以降はどうなりますか", "hint": "無料の上限と、超えた場合の金額・単価を即答できるのが合格。曖昧なまま進めると変更のたびにもめる原因になる。"}, {"id": "10", "cat": "設計", "q": "希望している仕様と御社の標準仕様が食い違った場合、誰がどのように調整されますか", "hint": "調整の主体（設計士か営業か監督か）と判断基準を答えられるかを見る。「その場で相談しながら」のみだと、最終的に押し切られやすい。"}, {"id": "11", "cat": "設計", "q": "希望している納まりは、詳細図まで描いていただけますか。現場で大工さんの判断になりますか", "hint": "詳細図を描く会社は職人が替わっても仕上がりがぶれない。「現場で相談しながら」は腕次第で崩れる。"}, {"id": "12", "cat": "設計", "q": "設計を担当される方と、現場の監督さんは同じ方ですか。別の場合、設計の意図はどうやって現場に伝わりますか", "hint": "設計と施工の担当が分かれる会社では、詳細図や打合せ記録の引き継ぎ方法が仕上がりを左右する。「口頭で伝えます」のみは意図が薄れるリスクがある。"}, {"id": "13", "cat": "設計", "q": "地盤調査や建築確認申請、省エネ計算などの法定手続きは、どなたが担当されますか。費用は概算に含まれますか。地盤改良が必要になるかの判断はいつ分かりますか", "hint": "手続きの担当と費用有無、判明時期を明確に答えられるのが合格。地盤改良費は数十万〜百万円単位で変動しうるため、含まれないものの扱いを別途確認する。"}, {"id": "14", "cat": "設計", "q": "打合せの記録は残りますか。誰が作りますか", "hint": "議事録が会社に蓄積されているかは、担当交代時の復元力そのもの。"}, {"id": "15", "cat": "設計", "q": "契約前に出していただいた間取りの著作権はどちらにありますか。他社に持って行けますか", "hint": "見落としやすい。工務店帰属だと、他社を選んだ瞬間にその設計を失う。"}, {"id": "16", "cat": "SE構法", "q": "SE構法での施工実績は何棟ですか。うち吹抜けのある大空間は何棟ですか", "hint": "登録施工店であることと、大空間の実績があることは別。"}, {"id": "17", "cat": "SE構法", "q": "接合金物部の熱橋・結露対策はどうされますか。矩計図で見せていただけますか", "hint": "金属金物は熱橋になり内部結露の起点になりうる。図面で答えられるかが理解度の指標。"}, {"id": "18", "cat": "SE構法", "q": "SE105と通常のSE構法の坪単価差は、45坪だと総額でいくら変わりますか", "hint": "前回聞いた坪8万円差の確認。用語の理解が曖昧なまま他社比較すると判断が狂う。"}, {"id": "19", "cat": "見積・お金", "q": "概算にはどこまで含まれますか。含まれないものを先に教えてください", "hint": "「含まれないもの」から言える会社は誠実。地盤改良・外構・カーテン・照明・エアコン・防蟻・給排水引込の扱いを確認。"}, {"id": "20", "cat": "見積・お金", "q": "見積書は一式表記ですか、数量と単価が出ますか", "hint": "一式表記が多い見積は他社と比較できない。値引き交渉の余地も見えない。"}, {"id": "21", "cat": "見積・お金", "q": "契約後に金額が上がった事例で、直近だといくらくらい上がりましたか", "hint": "「上がったことはありません」は現実的にありえない。答え方でその会社の誠実さが出る。"}, {"id": "22", "cat": "見積・お金", "q": "資材が高騰した場合、契約後の価格はどうなりますか。誰が負担しますか", "hint": "契約書の該当条項を見せてもらう。口頭の「うちが持ちます」は根拠にならない。"}, {"id": "23", "cat": "見積・お金", "q": "契約後に追加や変更をお願いした場合、金額の提示までにどのくらいかかりますか。承認前に着工されることはありますか", "hint": "提示までの標準日数を具体的に言えるのが合格。承認前着工が常態化している会社は、後から金額を追認させられるリスクがある。"}, {"id": "24", "cat": "見積・お金", "q": "支払いのタイミングと割合はどうなりますか", "hint": "契約時・着工時・上棟時・引渡し時の配分。土地から買う場合はつなぎ融資・分割実行との整合が要る。"}, {"id": "25", "cat": "見積・お金", "q": "土地から探す場合、つなぎ融資や分割実行に対応いただけますか。提携行はどこですか", "hint": "工務店がネット銀行に対応できないケースがある。金融機関の選択肢が狭まると金利条件に効く。"}, {"id": "26", "cat": "施工体制", "q": "うちの家に入る職人さんは、どうやって決まりますか。監督が選ぶのか、時期の空き具合ですか", "hint": "「監督が現場に合わせて選ぶ」＝配分に意思がある。「手が空いている人に」＝実質くじ引き。"}, {"id": "27", "cat": "施工体制", "q": "大工さんと、断熱・気密をやる方について、専属は何組・パートナーは何社ですか", "hint": "全職種を平均されると重要職種の実態が薄まる。この2職種だけに絞って数字で聞く。"}, {"id": "28", "cat": "施工体制", "q": "繁忙期に着工が重なったときは、どうされますか", "hint": "最も本音が出る質問。「知り合いに頼む」なら繁忙期は実質都度手配。着工時期によって品質が変わることになる。"}, {"id": "29", "cat": "施工体制", "q": "造作は、躯体を組む大工さんと同じ方ですか", "hint": "巾木・建具枠・階段・間接照明の見切りは造作大工の技量で決まる。躯体大工とは別物の腕。"}, {"id": "30", "cat": "施工体制", "q": "スリット巾木やハイドアでやったお家を見せていただけますか", "hint": "反応が答えそのもの。実例がすぐ出ないなら標準対応ではない。図面に描けても現場でできない可能性。"}, {"id": "31", "cat": "施工体制", "q": "その専属の方は、この地域の方ですか。拠点ができたとき新しく探されたのですか", "hint": "新規開拓なら「専属」の付き合いはまだ短い。前の質問の答えと整合するかを見る。"}, {"id": "32", "cat": "品質の仕組み", "q": "断熱や気密の施工要領書はありますか。初めて入る職人さんにも渡して説明されますか", "hint": "要領書があっても渡していなければ存在しないのと同じ。「大工さんは分かってますから」は暗黙知依存。"}, {"id": "33", "cat": "品質の仕組み", "q": "断熱材を入れ終わった段階で、監督さんは何を確認されますか。チェックリストを見せていただけますか", "hint": "現物を見る。項目数と粒度が管理の解像度そのもの。真っさらな新品なら日常運用されていない。"}, {"id": "34", "cat": "品質の仕組み", "q": "そのチェックは、壁を塞ぐ前ですか", "hint": "塞いだ後の確認は記録のためであって品質のためではない。直せるタイミングで見ているかが決定的。"}, {"id": "35", "cat": "品質の仕組み", "q": "工事中の写真は、全部屋分残りますか。引渡し後にいただけますか", "hint": "代表箇所だけの写真は良い場所を選んで撮れる。壁を塞いだ後は写真が唯一の証拠になる。"}, {"id": "36", "cat": "品質の仕組み", "q": "協力会社さんを評価する仕組みはありますか。次から使わない、という判断はされますか", "hint": "評価して切れる会社は都度手配でも質が上がる。「長い付き合いなので」で切れない会社は質の悪い職人が滞留する。"}, {"id": "37", "cat": "品質の仕組み", "q": "過去に、職人さんにやり直しをさせた事例はありますか", "hint": "具体例が出る会社は強制力を実際に行使している。「うちの職人はそんなことない」は確認していないだけの可能性。"}, {"id": "38", "cat": "品質の仕組み", "q": "施工のやり直しが出た場合、費用はどちらが持たれますか", "hint": "工務店負担なら職人に強く言える。施主負担や曖昧なら、監督が現場で妥協する動機が生まれる。"}, {"id": "39", "cat": "品質の仕組み", "q": "第三者の検査は入りますか。何回、どのタイミングですか", "hint": "社内検査のみと、基礎・上棟・断熱・完成の4回入るのとでは、職人が同じでも結果が変わる。"}, {"id": "40", "cat": "品質の仕組み", "q": "工事中の検査記録や写真は、何年保管されますか。引渡し後にこちらから見せてほしいと言えば出していただけますか", "hint": "保管期間と開示可否を明確に答えられるのが合格。将来の不具合原因調査で必要になるため、保管が短い、または開示に消極的なら要注意。"}, {"id": "41", "cat": "断熱・気密", "q": "UA値0.46・C値0.5は標準仕様で届きますか。追加費用はいくらですか", "hint": "有償オプション扱いなら総額が変わる。標準で届くと言うなら次の質問で実測値を見る。"}, {"id": "42", "cat": "断熱・気密", "q": "直近の実測C値を、良い順ではなく全棟分見せていただけますか", "hint": "最重要。ばらつきの幅が施工品質そのもの。選抜された数値だけ出す会社は実態を隠している。"}, {"id": "43", "cat": "断熱・気密", "q": "気密測定は中間と完成の2回ですか。第三者機関ですか、自社ですか", "hint": "完成時のみ＝直せないタイミングでしか測っていない。中間測定の有無が最大の分かれ目。"}, {"id": "44", "cat": "断熱・気密", "q": "C値が目標に届かなかった場合、改善工事は無償ですか。契約書か覚書に書いていただけますか", "hint": "書面化を渋る会社は達成に自信がないか直す気がない。口約束は担当交代で消える。"}, {"id": "45", "cat": "断熱・気密", "q": "気密測定の数値は、施工した職人さんにも共有されますか", "hint": "数値が職人に返らない会社はC値が改善しない。フィードバックループがなく、測って終わりになっている。"}, {"id": "46", "cat": "断熱・気密", "q": "断熱材や気密のテープは、大工さんがやられますか。専門の業者さんですか", "hint": "C値0.5は大工の腕では出ない。誰が施工するかで性能のばらつきが決まる。"}, {"id": "47", "cat": "現場管理", "q": "監督さんはこの拠点に常駐ですか。何名で、SE構法の資格をお持ちの方は何名ですか", "hint": "有資格者1名だけなら、その人の離職・繁忙・体調不良が工程に直撃する。"}, {"id": "48", "cat": "現場管理", "q": "監督さん1人が同時に何棟見ておられますか", "hint": "4〜6棟なら妥当。10棟超なら週1回来られるかどうか。ここが多いと他の仕組みが実行されていない可能性。"}, {"id": "49", "cat": "現場管理", "q": "現場には週に何回くらい行かれますか", "hint": "前の質問の棟数と整合するかを見る。数字が合わない説明は実態と乖離している。"}, {"id": "50", "cat": "現場管理", "q": "工事の途中で担当や監督が替わる場合、引き継ぎはどうなりますか", "hint": "2年近い伴走で交代は現実に起こる。記録が会社に残っているかで復元力が決まる。"}, {"id": "51", "cat": "現場管理", "q": "近隣への挨拶回りや、工事中の騒音・駐車・搬入車両への対応はどなたが担当されますか", "hint": "施主が対応する会社と、監督や専門業者が代行する会社がある。近隣トラブルは住み始めてからの関係に響くため、対応主体を確認しておく。"}, {"id": "52", "cat": "保証・アフター", "q": "定期点検は、この拠点の方が来られますか。本部や外部委託ですか", "hint": "施工した人間が点検するほうが不具合の原因に辿り着きやすい。外部委託なら補修の実施主体と費用負担を確認。"}, {"id": "53", "cat": "保証・アフター", "q": "10年以降の保証延長の条件は。有償メンテが条件になりますか", "hint": "保証継続に高額な有償メンテが条件づけられているケースがある。総額で判断する。"}, {"id": "54", "cat": "保証・アフター", "q": "外壁・屋根・防水・設備の更新周期と費用はどのくらいですか。足場代も含めて教えてください", "hint": "塗り壁とタイルで周期も費用も変わる。30年の総額で外壁仕様を判断するための材料。"}, {"id": "55", "cat": "判断材料", "q": "上棟中の現場と、造作中の現場を両方見せていただけますか", "hint": "質問の答えは作れるが現場は作れない。養生・整理・職人の様子を見る。同じ現場に2回行けば顔ぶれの安定も分かる。"}, {"id": "56", "cat": "判断材料", "q": "御社が苦手なこと、他社さんのほうが得意なことは何ですか", "hint": "「特にありません」より、正直に弱点を言う会社のほうが後の打合せで信用できる。"}];
+const CATEGORIES = ["会社・契約主体", "設計", "SE構法", "見積・お金", "施工体制", "品質の仕組み", "断熱・気密", "現場管理", "保証・アフター", "判断材料"];
+
+const KEY = "builder-interview-v1";
+const EV = [
+  { v: "○", cls: "good", label: "良い" },
+  { v: "△", cls: "mid", label: "普通" },
+  { v: "✕", cls: "bad", label: "駄目" },
+  { v: "―", cls: "na", label: "該当なし" },
+];
+
+let state = null;
+let activeId = null;
+let filter = "all";
+let closedHints = new Set();
+let saveTimer = null;
+let loadError = false;
+
+const uid = (p) => p + "-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function freshBuilder(name) {
+  return {
+    id: uid("b"),
+    name: name,
+    meta: { date: "", person: "", place: "" },
+    questions: state.template.map((q) => ({ ...q })),
+    answers: {},
+  };
+}
+
+function blankState() {
+  return { version: 1, template: DEFAULT_TEMPLATE.map((q) => ({ ...q })), builders: [], nextQId: DEFAULT_TEMPLATE.length + 1 };
+}
+
+// ── 保存・読み込み ───────────────────────────
+async function load() {
+  try {
+    if (!window.storage) throw new Error("ストレージが利用できません");
+    const r = await window.storage.get(KEY);
+    if (r && r.value) {
+      const parsed = JSON.parse(r.value);
+      if (parsed && Array.isArray(parsed.builders) && Array.isArray(parsed.template)) return parsed;
+    }
+  } catch (e) {
+    // キーが無い場合もここに来る。初回起動として扱う
+    console.log("初回起動、または保存データなし:", e && e.message);
+  }
+  return blankState();
+}
+
+function toast(msg, isErr) {
+  const el = document.getElementById("saving");
+  if (!el) return;
+  el.textContent = msg;
+  el.className = "saving on" + (isErr ? " err" : "");
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.className = "saving" + (isErr ? " err" : ""); }, isErr ? 4000 : 1200);
+}
+
+function save() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try {
+      if (!window.storage) throw new Error("ストレージが利用できません");
+      const res = await window.storage.set(KEY, JSON.stringify(state));
+      if (!res) throw new Error("保存に失敗しました");
+      toast("保存しました");
+    } catch (e) {
+      toast("保存できませんでした。書き出しでバックアップしてください", true);
+      console.error(e);
+    }
+  }, 500);
+}
+
+// ── 集計 ───────────────────────────────────
+function stats(b) {
+  const total = b.questions.length;
+  let done = 0, flagged = 0;
+  b.questions.forEach((q) => {
+    const a = b.answers[q.id];
+    if (a && ((a.text && a.text.trim()) || a.ev)) done++;
+    if (a && a.flag) flagged++;
+  });
+  return { total, done, flagged, pct: total ? Math.round((done / total) * 100) : 0 };
+}
+
+function visible(b, q) {
+  const a = b.answers[q.id] || {};
+  const answered = (a.text && a.text.trim()) || a.ev;
+  if (filter === "open") return !answered;
+  if (filter === "flag") return !!a.flag;
+  if (filter === "bad") return a.ev === "✕" || a.ev === "△";
+  return true;
+}
+
+// ── 描画 ───────────────────────────────────
+function render() {
+  const root = document.getElementById("root");
+  const b = state.builders.find((x) => x.id === activeId) || null;
+
+  root.innerHTML = `
+    <div class="sheet-head">
+      <div class="sheet-title">
+        <h1 class="mincho">工務店ヒアリング記録</h1>
+        <span class="sheet-no mono">SE / 守山・野洲</span>
+      </div>
+      <p class="sheet-sub">必須質問${state.template.length}問。会社ごとにタブを分けて記録します。追加した質問は、この会社だけか全社共通かを選べます。</p>
+      <div class="tabs" role="tablist">
+        ${state.builders.map((x) => {
+          const s = stats(x);
+          return `<button class="tab" role="tab" aria-selected="${x.id === activeId}" data-tab="${x.id}">
+            ${esc(x.name)}<span class="pct mono">${s.done}/${s.total}</span></button>`;
+        }).join("")}
+        <button class="tab-add" data-act="add-builder">＋ 会社を追加</button>
+      </div>
+    </div>
+    ${loadError ? `<div class="banner">前回の保存データを読み込めませんでした。新しく始めるか、バックアップを読み込んでください。</div>` : ""}
+    ${b ? panel(b) : emptyView()}
+    <div class="saving" id="saving"></div>
+    ${dialogs()}
+  `;
+  bind();
+}
+
+function emptyView() {
+  return `<div class="empty">
+    <div>まだ会社が登録されていません。</div>
+    <button class="btn" data-act="add-builder">最初の会社を追加する</button>
+  </div>`;
+}
+
+function panel(b) {
+  const s = stats(b);
+  const shown = b.questions.filter((q) => visible(b, q));
+  const cats = [];
+  shown.forEach((q) => { if (!cats.includes(q.cat)) cats.push(q.cat); });
+
+  return `
+    <div class="meta-bar">
+      <div class="meta-cell"><label>訪問日</label><input data-meta="date" value="${esc(b.meta.date)}" placeholder="2026-08-30"></div>
+      <div class="meta-cell"><label>対応者</label><input data-meta="person" value="${esc(b.meta.person)}" placeholder="氏名・役職"></div>
+      <div class="meta-cell"><label>場所</label><input data-meta="place" value="${esc(b.meta.place)}" placeholder="ショールーム名など"></div>
+      <div class="meta-cell progress">
+        <div class="track">
+          <div class="fill" style="width:${s.pct}%"></div>
+          <div class="flagged" style="width:${s.total ? (s.flagged / s.total) * 100 : 0}%"></div>
+        </div>
+        <div class="num mono"><span>回答 ${s.done} / ${s.total}（${s.pct}%）</span><span>要再確認 ${s.flagged}</span></div>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <button class="chip" data-filter="all" aria-pressed="${filter === "all"}">すべて</button>
+      <button class="chip" data-filter="open" aria-pressed="${filter === "open"}">未回答</button>
+      <button class="chip danger" data-filter="flag" aria-pressed="${filter === "flag"}">要再確認</button>
+      <button class="chip" data-filter="bad" aria-pressed="${filter === "bad"}">△・✕</button>
+      <span class="spacer"></span>
+      <button class="link-btn" data-act="rename">会社名を変更</button>
+      <button class="link-btn" data-act="export">書き出す</button>
+      <button class="link-btn" data-act="import">読み込む</button>
+      <button class="link-btn" data-act="del-builder">この会社を削除</button>
+    </div>
+
+    <div class="list">
+      ${shown.length === 0 ? `<div class="empty">該当する質問がありません。</div>` : ""}
+      ${cats.map((c) => {
+        const qs = shown.filter((q) => q.cat === c);
+        return `<div class="cat-head"><h2 class="mincho">${esc(c)}</h2><span class="count mono">${qs.length}</span></div>
+          ${qs.map((q) => qCard(b, q)).join("")}`;
+      }).join("")}
+
+      <div class="adder">
+        <textarea id="new-q" placeholder="質問を追加する"></textarea>
+        <div class="adder-row">
+          <select id="new-cat">${CATEGORIES.concat(b.questions.map((q) => q.cat))
+            .filter((c, i, a) => a.indexOf(c) === i)
+            .map((c) => `<option>${esc(c)}</option>`).join("")}</select>
+          <select id="new-scope">
+            <option value="this">この会社だけ</option>
+            <option value="all">全社共通（テンプレートに追加）</option>
+          </select>
+          <button class="btn" data-act="add-q">追加</button>
+          <span class="scope-note">全社共通を選ぶと、今ある会社すべてと、これから追加する会社にも入ります。</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function qCard(b, q) {
+  const a = b.answers[q.id] || {};
+  const answered = (a.text && a.text.trim()) || a.ev;
+  const open = !closedHints.has(q.id);
+  return `
+  <div class="q ${a.flag ? "flagged" : answered ? "answered" : ""}" data-q="${q.id}">
+    <div class="q-top">
+      <span class="q-id mono">Q${esc(String(q.id).padStart(2, "0"))}</span>
+      <div class="q-text">
+        ${esc(q.q)}${q.custom ? `<span class="custom-tag">追加</span>` : ""}
+        ${q.hint ? (open
+            ? `<p class="q-hint">${esc(q.hint)}</p><button class="hint-toggle" data-hint="${q.id}">隠す</button>`
+            : `<button class="hint-toggle" data-hint="${q.id}">質問の意図・判断基準を見る</button>`) : ""}
+      </div>
+    </div>
+    <div class="q-body">
+      <textarea class="a-main" data-ans="${q.id}" placeholder="回答を記録">${esc(a.text)}</textarea>
+      <textarea class="a-judge" data-judge="${q.id}" placeholder="判断記述（この回答をどう評価するか）">${esc(a.judge)}</textarea>
+      <textarea class="a-memo" data-memo="${q.id}" placeholder="所感・気になったこと">${esc(a.memo)}</textarea>
+      <div class="q-controls">
+        ${EV.map((e) => `<button class="ev ${e.cls}" data-ev="${q.id}" data-val="${e.v}"
+            aria-pressed="${a.ev === e.v}" title="${e.label}">${e.v}</button>`).join("")}
+        <button class="flag-btn" data-flag="${q.id}" aria-pressed="${!!a.flag}">要再確認</button>
+        ${q.custom ? `<button class="del-btn" data-delq="${q.id}">削除</button>` : ""}
+      </div>
+    </div>
+  </div>`;
+}
+
+function dialogs() {
+  return `
+  <dialog id="dlg-name">
+    <div class="dlg-head"><h3 id="dlg-name-title">会社を追加</h3><p id="dlg-name-note">工務店・ハウスメーカー名を入れてください。</p></div>
+    <div class="dlg-body"><input type="text" id="dlg-name-input" placeholder="例：チェックハウス"></div>
+    <div class="dlg-foot">
+      <button class="btn ghost" data-act="dlg-cancel">やめる</button>
+      <button class="btn" data-act="dlg-name-ok">決定</button>
+    </div>
+  </dialog>
+
+  <dialog id="dlg-io">
+    <div class="dlg-head"><h3 id="dlg-io-title">書き出す</h3><p id="dlg-io-note">この文字列をコピーして保管してください。</p></div>
+    <div class="dlg-body"><textarea id="dlg-io-text" class="mono"></textarea></div>
+    <div class="dlg-foot">
+      <button class="btn ghost" data-act="dlg-cancel">閉じる</button>
+      <button class="btn" id="dlg-io-ok" data-act="dlg-import-ok">読み込む</button>
+    </div>
+  </dialog>
+
+  <dialog id="dlg-confirm">
+    <div class="dlg-head"><h3 id="dlg-c-title">削除しますか</h3><p id="dlg-c-note"></p></div>
+    <div class="dlg-body"></div>
+    <div class="dlg-foot">
+      <button class="btn ghost" data-act="dlg-cancel">やめる</button>
+      <button class="btn" data-act="dlg-confirm-ok">削除する</button>
+    </div>
+  </dialog>`;
+}
+
+// ── 操作 ───────────────────────────────────
+function ans(b, qid) {
+  if (!b.answers[qid]) b.answers[qid] = { text: "", judge: "", memo: "", ev: "", flag: false };
+  return b.answers[qid];
+}
+
+let nameMode = "add";
+let confirmFn = null;
+
+function bind() {
+  const root = document.getElementById("root");
+  const b = state.builders.find((x) => x.id === activeId);
+
+  root.querySelectorAll("[data-tab]").forEach((el) =>
+    el.onclick = () => { activeId = el.dataset.tab; render(); });
+
+  root.querySelectorAll("[data-filter]").forEach((el) =>
+    el.onclick = () => { filter = el.dataset.filter; render(); });
+
+  root.querySelectorAll("[data-hint]").forEach((el) =>
+    el.onclick = () => {
+      const id = el.dataset.hint;
+      closedHints.has(id) ? closedHints.delete(id) : closedHints.add(id);
+      render();
+    });
+
+  root.querySelectorAll("[data-act]").forEach((el) => el.onclick = () => act(el.dataset.act, b));
+
+  if (!b) return;
+
+  root.querySelectorAll("[data-meta]").forEach((el) =>
+    el.oninput = () => { b.meta[el.dataset.meta] = el.value; save(); });
+
+  root.querySelectorAll("[data-ans]").forEach((el) =>
+    el.oninput = () => {
+      ans(b, el.dataset.ans).text = el.value;
+      save();
+      updateCard(b, el.dataset.ans);
+    });
+
+  root.querySelectorAll("[data-judge]").forEach((el) =>
+    el.oninput = () => { ans(b, el.dataset.judge).judge = el.value; save(); });
+
+  root.querySelectorAll("[data-memo]").forEach((el) =>
+    el.oninput = () => { ans(b, el.dataset.memo).memo = el.value; save(); });
+
+  root.querySelectorAll("[data-ev]").forEach((el) =>
+    el.onclick = () => {
+      const a = ans(b, el.dataset.ev);
+      a.ev = a.ev === el.dataset.val ? "" : el.dataset.val;
+      save(); render();
+    });
+
+  root.querySelectorAll("[data-flag]").forEach((el) =>
+    el.onclick = () => {
+      const a = ans(b, el.dataset.flag);
+      a.flag = !a.flag;
+      save(); render();
+    });
+
+  root.querySelectorAll("[data-delq]").forEach((el) =>
+    el.onclick = () => {
+      const q = b.questions.find((x) => x.id === el.dataset.delq);
+      askConfirm("質問を削除しますか", q ? q.q : "", () => {
+        b.questions = b.questions.filter((x) => x.id !== el.dataset.delq);
+        delete b.answers[el.dataset.delq];
+        save(); render();
+      });
+    });
+}
+
+// 入力中の再描画を避けつつ、進捗と左端の色だけ更新する
+function updateCard(b, qid) {
+  const card = document.querySelector(`[data-q="${qid}"]`);
+  if (card) {
+    const a = b.answers[qid] || {};
+    const answered = (a.text && a.text.trim()) || a.ev;
+    card.className = "q " + (a.flag ? "flagged" : answered ? "answered" : "");
+  }
+  const s = stats(b);
+  const fill = document.querySelector(".progress .fill");
+  const num = document.querySelector(".progress .num span");
+  if (fill) fill.style.width = s.pct + "%";
+  if (num) num.textContent = `回答 ${s.done} / ${s.total}（${s.pct}%）`;
+  const tab = document.querySelector(`[data-tab="${b.id}"] .pct`);
+  if (tab) tab.textContent = `${s.done}/${s.total}`;
+}
+
+function askName(mode, current) {
+  nameMode = mode;
+  const d = document.getElementById("dlg-name");
+  document.getElementById("dlg-name-title").textContent = mode === "add" ? "会社を追加" : "会社名を変更";
+  document.getElementById("dlg-name-note").textContent =
+    mode === "add" ? "共通の質問リストが入った状態で始まります。" : "記録した回答はそのまま残ります。";
+  const i = document.getElementById("dlg-name-input");
+  i.value = current || "";
+  d.showModal();
+  setTimeout(() => i.focus(), 30);
+  i.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); act("dlg-name-ok"); } };
+}
+
+function askConfirm(title, note, fn) {
+  document.getElementById("dlg-c-title").textContent = title;
+  document.getElementById("dlg-c-note").textContent = note;
+  confirmFn = fn;
+  document.getElementById("dlg-confirm").showModal();
+}
+
+function act(a, b) {
+  if (a === "add-builder") return askName("add");
+  if (a === "rename") return askName("rename", b.name);
+
+  if (a === "dlg-name-ok") {
+    const v = document.getElementById("dlg-name-input").value.trim();
+    if (!v) return;
+    document.getElementById("dlg-name").close();
+    if (nameMode === "add") {
+      const nb = freshBuilder(v);
+      state.builders.push(nb);
+      activeId = nb.id;
+    } else {
+      const cur = state.builders.find((x) => x.id === activeId);
+      if (cur) cur.name = v;
+    }
+    save(); render();
+    return;
+  }
+
+  if (a === "dlg-cancel") {
+    document.querySelectorAll("dialog[open]").forEach((d) => d.close());
+    return;
+  }
+
+  if (a === "del-builder") {
+    return askConfirm("この会社を削除しますか", `「${b.name}」の回答もすべて消えます。元に戻せません。`, () => {
+      state.builders = state.builders.filter((x) => x.id !== b.id);
+      activeId = state.builders[0] ? state.builders[0].id : null;
+      save(); render();
+    });
+  }
+
+  if (a === "dlg-confirm-ok") {
+    document.getElementById("dlg-confirm").close();
+    if (confirmFn) confirmFn();
+    confirmFn = null;
+    return;
+  }
+
+  if (a === "add-q") {
+    const t = document.getElementById("new-q").value.trim();
+    if (!t) return;
+    const cat = document.getElementById("new-cat").value;
+    const scope = document.getElementById("new-scope").value;
+    const q = { id: String(state.nextQId++), cat, q: t, hint: "", custom: true };
+    if (scope === "all") {
+      state.template.push({ ...q });
+      state.builders.forEach((x) => x.questions.push({ ...q }));
+    } else {
+      b.questions.push(q);
+    }
+    save(); render();
+    return;
+  }
+
+  if (a === "export") {
+    const d = document.getElementById("dlg-io");
+    document.getElementById("dlg-io-title").textContent = "書き出す";
+    document.getElementById("dlg-io-note").textContent = "この文字列をコピーして保管してください。";
+    document.getElementById("dlg-io-text").value = JSON.stringify(state);
+    document.getElementById("dlg-io-ok").style.display = "none";
+    d.showModal();
+    setTimeout(() => document.getElementById("dlg-io-text").select(), 30);
+    return;
+  }
+
+  if (a === "import") {
+    const d = document.getElementById("dlg-io");
+    document.getElementById("dlg-io-title").textContent = "読み込む";
+    document.getElementById("dlg-io-note").textContent = "書き出した文字列を貼り付けてください。いまの記録は置き換わります。";
+    document.getElementById("dlg-io-text").value = "";
+    document.getElementById("dlg-io-ok").style.display = "";
+    d.showModal();
+    return;
+  }
+
+  if (a === "dlg-import-ok") {
+    const raw = document.getElementById("dlg-io-text").value.trim();
+    try {
+      const p = JSON.parse(raw);
+      if (!p || !Array.isArray(p.builders) || !Array.isArray(p.template)) throw new Error("形式が違います");
+      state = p;
+      activeId = state.builders[0] ? state.builders[0].id : null;
+      document.getElementById("dlg-io").close();
+      save(); render();
+      toast("読み込みました");
+    } catch (e) {
+      document.getElementById("dlg-io-note").textContent = "読み込めませんでした。書き出した文字列をそのまま貼り付けてください。";
+    }
+    return;
+  }
+}
+
+// ── 起動 ───────────────────────────────────
+(async () => {
+  state = await load();
+  if (!state.builders.length) {
+    ["チェックハウス", "BUILD WORKs", "楠亀工務店"].forEach((n) => state.builders.push(freshBuilder(n)));
+  }
+  activeId = state.builders[0] ? state.builders[0].id : null;
+  render();
+})();
+
+</script>

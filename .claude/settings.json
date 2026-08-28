@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git pull *)",
+      "WebSearch",
+      "WebFetch(domain:www.pgm.co.jp)",
+      "WebFetch(domain:www2.biz-lixil.com)",
+      "WebFetch(domain:re-model.jp)",
+      "WebFetch(domain:www.isover.co.jp)",
+      "WebFetch(domain:www.mlit.go.jp)",
+      "WebFetch(domain:besthouse.cc)",
+      "Bash(node -e \"const fs=require\\('fs'\\);const s=fs.readFileSync\\('index.html','utf8'\\);const m=s.match\\(/const DEFAULT_TEMPLATE = \\(\\\\[[\\\\s\\\\S]*?\\\\n\\\\]\\);/\\);const arr=eval\\(m[1]\\);console.log\\('count',arr.length\\);console.log\\('ids',arr.map\\(q=>q.id\\).join\\(','\\)\\);console.log\\('dq',arr.filter\\(q=>q.dq\\).map\\(q=>q.id\\).join\\(','\\)\\);\")",
+      "Bash(node /c/Users/k1143/AppData/Local/Temp/claude/c--Users-k1143-git-builder-QA/efb8ffa4-6093-448d-aafb-f0ec3d6c22da/scratchpad/gen.js)",
+      "Bash(node -e \"const fs=require\\('fs'\\);let s=fs.readFileSync\\('index.html','utf8'\\);let m=s.match\\(/<script>\\([\\\\s\\\\S]*\\)<\\\\/script>/\\);fs.writeFileSync\\(process.env.TMPDIR? '/tmp/chk.js':'chk.js',m[1]\\);\")",
+      "Bash(node --check chk.js)",
+      "Bash(node -e \"const fs=require\\('fs'\\);const s=fs.readFileSync\\('index.html','utf8'\\);fs.writeFileSync\\('chk.js',s.match\\(/<script>\\([\\\\s\\\\S]*\\)<\\\\/script>/\\)[1]\\);\")",
+      "Bash(node -e \"const fs=require\\('fs'\\);const s=fs.readFileSync\\('index.html','utf8'\\);const arr=eval\\(s.match\\(/const DEFAULT_TEMPLATE = \\(\\\\[[\\\\s\\\\S]*?\\\\n\\\\]\\);/\\)[1]\\);console.log\\('count',arr.length\\);console.log\\('ids',arr.map\\(q=>q.id\\).join\\(','\\)\\);console.log\\('dq',arr.filter\\(q=>q.dq\\).map\\(q=>q.id\\).join\\(','\\)\\);const dup=arr.map\\(q=>q.id\\).filter\\(\\(v,i,a\\)=>a.indexOf\\(v\\)!==i\\);console.log\\('dups',dup\\);\")",
+      "Bash(node -e \"const fs=require\\('fs'\\);fs.writeFileSync\\('chk.js',fs.readFileSync\\('index.html','utf8'\\).match\\(/<script>\\([\\\\s\\\\S]*\\)<\\\\/script>/\\)[1]\\);\")",
+      "Bash(node -e \"const fs=require\\('fs'\\);const s=fs.readFileSync\\('index.html','utf8'\\);const arr=eval\\(s.match\\(/const DEFAULT_TEMPLATE = \\(\\\\[[\\\\s\\\\S]*?\\\\n\\\\]\\);/\\)[1]\\);console.log\\('count',arr.length\\);const ids=arr.map\\(q=>q.id\\);console.log\\('dups',ids.filter\\(\\(v,i,a\\)=>a.indexOf\\(v\\)!==i\\)\\);console.log\\('top',arr.filter\\(q=>q.tier==='top'\\).length\\);console.log\\('new85-88',arr.filter\\(q=>['85','86','87','88'].includes\\(q.id\\)\\).map\\(q=>q.id+':'+q.tier\\)\\);console.log\\('promoted',['7','11','30','68','71'].map\\(id=>id+':'+arr.find\\(q=>q.id===id\\).tier\\)\\);\")",
+      "Bash(node -e \"const fs=require\\('fs'\\);const s=fs.readFileSync\\('index.html','utf8'\\);const arr=eval\\(s.match\\(/const DEFAULT_TEMPLATE = \\(\\\\[[\\\\s\\\\S]*?\\\\n\\\\]\\);/\\)[1]\\);const t={};arr.forEach\\(q=>t[q.tier]=\\(t[q.tier]||0\\)+1\\);console.log\\('tiers',t,'total',arr.length\\);\")",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
+    ]
+  }
+}
